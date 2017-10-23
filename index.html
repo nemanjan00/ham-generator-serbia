@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<title>HAM Generator</title>
+
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" type="text/css" charset="utf-8">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css" charset="utf-8">
+
+		<style>
+			body {
+				padding-top: 70px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>JSON repetitora <button id="nice-json-dl" class="btn btn-primary"> <i class="fa fa-download" aria-hidden="true"></i> Sređeni JSON</button> <button id="json-dl" class="btn btn-primary"> <i class="fa fa-download" aria-hidden="true"></i> JSON</button></h1>
+
+			<div class="row">
+				<div class="col-md-6">
+					<textarea class="form-control" rows="10" id="json-nice"></textarea>
+				</div>
+				<div class="col-md-6">
+					<textarea class="form-control" rows="10" id="json"></textarea>
+				</div>
+			</div>
+
+			<hr>
+
+			<p>
+				Velika zahvalnica za: <a href="http://ham.pirot.org/index.php">ham.pirot.org</a> za ovu listu. 
+			</p>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+
+		<script src="./js/download.js"></script>
+
+		<script>
+			(function(){
+				let pirotParser = {
+					tables: [],
+
+					parse: function(data){
+						let tables = data.split("<table");
+
+						tables = tables.map(function(table){
+							return table.split("</table")[0];
+						});
+
+
+						tables = tables.filter(function(table){
+							return table.includes("Ознака");
+						})
+
+						tables = tables.map(function(table){
+							let rows = table.split("<tr>");
+
+							rows.shift();
+
+							rows = rows.map(function(row){
+								return row.split("</tr>")[0];
+							});
+
+							rows = rows.map(function(row){
+								let columns = row.split("<td");
+
+								columns.shift();
+
+								columns = columns.map(function(column){
+									column = column.split(">");
+									column.shift();
+
+									column = column.join(">");
+
+									column = column.split("</td>")[0];
+
+									return column;
+								});
+
+								return columns;
+							});
+
+							return rows;
+						});
+
+						tables = tables.map(pirotParser.tableToObject);
+
+						return tables;
+					},
+					tableToObject: function(table){
+						let head = table.shift();
+
+						head = head.map(function(column){
+							return column.replace("<br>", " ");
+						});
+						
+						table = table.map(function(row){
+							let rowObject = {};
+
+							row.forEach(function(row, id){
+								if(row.includes("font")){
+									row = row.split(">")[1].split("<")[0];
+								}
+
+								rowObject[head[id]] = row;
+							});
+
+							return rowObject;
+						});
+
+						return table;
+					}
+				}
+
+				$.get("https://cors.nemanja.top/http://ham.pirot.org/zemlja.php", function(data){
+					let repetitoriObject = pirotParser.parse(data);
+
+					$("#json").val(JSON.stringify(repetitoriObject));
+					$("#json-nice").val(JSON.stringify(repetitoriObject, null, 4));
+
+					$("#nice-json-dl").click(function(){
+						download("nice-json.json", JSON.stringify(repetitoriObject, null, 4));
+					});
+
+					$("#json-dl").click(function(){
+						download("json.json", JSON.stringify(repetitoriObject));
+					});
+				});
+			})();
+		</script>
+	</body>
+</html>
