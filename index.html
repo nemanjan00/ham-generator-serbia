@@ -28,6 +28,16 @@
 
 			<hr>
 
+			<h1>CSV repetitora <button id="json-dl" class="btn btn-primary" v-on:click="downloadCSV()"> <i class="fa fa-download" aria-hidden="true"></i> CSV</button></h1>
+
+			<div class="row">
+				<div class="col-md-12">
+					<textarea class="form-control" rows="10">{{repeaters | csv}}</textarea>
+				</div>
+			</div>
+
+			<hr>
+
 			<p>
 				Velika zahvalnica za: <a href="http://ham.pirot.org/index.php">ham.pirot.org</a> za ovu listu. 
 			</p>
@@ -123,17 +133,19 @@
 								rowObject[pirotParser.translateName(head[id])] = row;
 
 								delete rowObject["delete"];
-
-								if(rowObject.Offset !== undefined && rowObject.Duplex === undefined){
-									rowObject.Duplex = rowObject.Offset.charAt(0);
-									rowObject.Offset = Math.abs(rowObject.Offset);
-								}
-
-								if(rowObject.Tone !== undefined && rowObject.Tone !== "" && rowObject.rToneFreq === undefined){
-									rowObject.rToneFreq = rowObject.Tone;
-									rowObject.Tone = "Tone";
-								}
 							});
+
+							if(rowObject.Offset !== undefined && rowObject.Offset != 0 && rowObject.Duplex === undefined){
+								rowObject.Duplex = rowObject.Offset.charAt(0);
+								rowObject.Offset = Math.abs(rowObject.Offset);
+							}
+
+							if(rowObject.Tone !== undefined && rowObject.Tone !== "" && rowObject.rToneFreq === undefined){
+								rowObject.rToneFreq = rowObject.Tone;
+								rowObject.Tone = "Tone";
+							}
+
+							rowObject.Selected = true;
 
 							return rowObject;
 						});
@@ -155,12 +167,87 @@
 
 				var link = "https://cors.nemanja.top/http://ham.pirot.org/zemlja.php";
 
-				new Vue ({
+				let app = new Vue ({
 					el: '#app',
 					data: {
-						repeaters: []
+						repeaters: {}
 					},
 					filters: {
+						csv: function(value){
+							let i = 0;
+
+							let head = {
+								"Location": function(repeater){
+									return ++i;
+								}, 
+								"Name": function(repeater){
+									return repeater.Name || "";
+								}, 
+								"Frequency": function(repeater){
+									return repeater.Frequency;
+								}, 
+								"Duplex": function(repeater){
+									return repeater.Duplex || "";
+								}, 
+								"Offset": function(repeater){
+									return repeater.Offset || 0;
+								}, 
+								"Tone": function(repeater){
+									return repeater.Tone || "";
+								}, 
+								"rToneFreq": function(repeater){
+									return repeater.rToneFreq || 88.5;
+								}, 
+								"cToneFreq": function(repeater){
+									return repeater.cToneFreq || 88.5;
+								}, 
+								"DtcsCode": function(repeater){
+									return repeater.DtcsCode || 23;
+								}, 
+								"DtcsPolarity": function(repeater){
+									return repeater.DtcsPolarity || "NN";
+								}, 
+								"Mode": function(repeater){
+									return repeater.Mode || "FM";
+								}, 
+								"TStep": function(repeater){
+									return repeater.TStep || 5;
+								}, 
+								"Skip": function(repeater){
+									return repeater.Skip || "";
+								}, 
+								"Comment": function(repeater){
+									return repeater.Comment || "";
+								}, 
+								"URCALL": function(repeater){
+									return repeater.URCALL || "";
+								}, 
+								"RPT1CALL": function(repeater){
+									return repeater.RPT1CALL || "";
+								}, 
+								"RPT2CALL": function(repeater){
+									return repeater.RPT2CALL || "";
+								}
+							};
+
+							let output = Object.keys(head).join(",")+"\n";
+
+							Object.keys(value).forEach(function(key){
+								value[key].forEach(function(repeater){
+									if(repeater.Selected){
+										let repeaterCSV = [];
+
+										Object.keys(head).forEach(function(key){
+											repeaterCSV.push(head[key](repeater));
+										});
+
+										output += repeaterCSV.join(",")+"\n";
+									}
+								});
+							});
+
+							return output;
+						},
 						jsonNice: function(value){
 							return JSON.stringify(value, null, 4);
 						},
@@ -170,7 +257,7 @@
 					},
 					methods:{
 						getRepeaters: function(){
-							this.$http.get(link).then(function(response){
+								this.$http.get(link).then(function(response){
 								this.repeaters = pirotParser.parse(response.data);
 							}, function(error){
 								console.log(error.statusText);
