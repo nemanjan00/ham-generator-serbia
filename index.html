@@ -263,6 +263,9 @@
 								console.log(error.statusText);
 							});
 						},
+						downloadCSV: function(){
+							download("csv.csv", this.$options.filters.csv(this.repeaters));
+						},
 						downloadNiceJson: function(){
 							download("json-nice.json", this.$options.filters.jsonNice(this.repeaters));
 						},
