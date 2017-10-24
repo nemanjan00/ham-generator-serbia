@@ -283,7 +283,7 @@
 							});
 						},
 						downloadCSV: function(){
-							download("csv.csv", this.$options.filters.csv(this.repeaters));
+							download("csv.csv", this.$options.filters.csv(this.repeaters, this.distinct));
 						},
 						downloadNiceJson: function(){
 							download("json-nice.json", this.$options.filters.jsonNice(this.repeaters));
