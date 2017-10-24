@@ -28,11 +28,14 @@
 
 			<hr>
 
-			<h1>CSV repetitora <button id="json-dl" class="btn btn-primary" v-on:click="downloadCSV()"> <i class="fa fa-download" aria-hidden="true"></i> CSV</button></h1>
+			<h1>CSV repetitora 
+				<button id="json-dl" class="btn btn-primary" v-on:click="downloadCSV()"> <i class="fa fa-download" aria-hidden="true"></i> CSV</button> 
+				<button id="json-dl" class="btn" v-bind:class="{ 'btn-success': distinct, 'btn-danger': !distinct }" v-on:click="distinct = !distinct"> <i class="fa" v-bind:class="{ 'fa-check': distinct, 'fa-times': !distinct }" aria-hidden="true"></i> Distinct</button>
+			</h1>
 
 			<div class="row">
 				<div class="col-md-12">
-					<textarea class="form-control" rows="10">{{repeaters | csv}}</textarea>
+					<textarea class="form-control" rows="10">{{repeaters | csv(distinct)}}</textarea>
 				</div>
 			</div>
 
@@ -103,7 +106,7 @@
 					},
 					translateName: function(name){
 						let dictionary = {
-							"Позивни знак": "Name",
+							"Ознака": "Name",
 							"Фреквенција [MHz]": "Frequency",
 							"Размак [MHz]": "Offset",
 							"PL [Hz]": "Tone",
@@ -171,10 +174,11 @@
 				let app = new Vue ({
 					el: '#app',
 					data: {
-						repeaters: {}
+						repeaters: {},
+						distinct: true
 					},
 					filters: {
-						csv: function(value){
+						csv: function(value, distinct){
 							let i = 0;
 
 							let head = {
@@ -218,7 +222,7 @@
 									return repeater.Skip || "";
 								}, 
 								"Comment": function(repeater){
-									return repeater.Comment || "";
+									return "";
 								}, 
 								"URCALL": function(repeater){
 									return repeater.URCALL || "";
@@ -233,16 +237,28 @@
 
 							let output = Object.keys(head).join(",")+"\n";
 
+							let added = [];
+
 							Object.keys(value).forEach(function(key){
 								value[key].forEach(function(repeater){
+									let hash = head["Name"](repeater)+head["Duplex"](repeater)+head["Offset"](repeater)+head["Tone"](repeater)+head["rToneFreq"](repeater);
+
 									if(repeater.Selected){
-										let repeaterCSV = [];
+										if(distinct && added[hash] === true){
+											console.log("Removed", repeater);
+										} else {
+											let repeaterCSV = [];
 
-										Object.keys(head).forEach(function(key){
-											repeaterCSV.push(head[key](repeater));
-										});
+											Object.keys(head).forEach(function(key){
+												repeaterCSV.push(head[key](repeater));
+											});
 
-										output += repeaterCSV.join(",")+"\n";
+											output += repeaterCSV.join(",")+"\n";
+
+											added[hash] = true;
+
+											console.log(Object.keys(added));
+										}
 									}
 								});
 							});
