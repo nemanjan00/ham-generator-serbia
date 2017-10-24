@@ -248,7 +248,7 @@
 									let hash = head["Name"](repeater)+head["Duplex"](repeater)+head["Offset"](repeater)+head["Tone"](repeater)+head["rToneFreq"](repeater);
 
 									if(repeater.Selected){
-										if(distinct && added[hash] === true){
+										if(distinct && added[hash] !== undefined){
 											console.log("Removed", repeater);
 										} else {
 											let repeaterCSV = [];
