@@ -222,7 +222,11 @@
 									return repeater.Skip || "";
 								}, 
 								"Comment": function(repeater){
-									return "";
+									if(distinct){
+										return "";
+									} else {
+										return repeater.Comment;
+									}
 								}, 
 								"URCALL": function(repeater){
 									return repeater.URCALL || "";
@@ -255,9 +259,7 @@
 
 											output += repeaterCSV.join(",")+"\n";
 
-											added[hash] = true;
-
-											console.log(Object.keys(added));
+											added[hash] = [repeater.Name];
 										}
 									}
 								});
