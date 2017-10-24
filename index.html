@@ -87,8 +87,23 @@
 						});
 
 						tables = tables.map(pirotParser.tableToObject);
+						tables = pirotParser.tablesToObject(tables);
 
 						return tables;
+					},
+					translateName: function(name){
+						let dictionary = {
+							"Позивни знак": "Name",
+							"Фреквенција [MHz]": "Frequency",
+							"Размак [MHz]": "Offset",
+							"PL [Hz]": "Tone"
+						};
+
+						if(dictionary[name] !== undefined){
+							return dictionary[name];
+						} else {
+							return "delete";
+						}
 					},
 					tableToObject: function(table){
 						let head = table.shift();
@@ -105,13 +120,36 @@
 									row = row.split(">")[1].split("<")[0];
 								}
 
-								rowObject[head[id]] = row;
+								rowObject[pirotParser.translateName(head[id])] = row;
+
+								delete rowObject["delete"];
+
+								if(rowObject.Offset !== undefined && rowObject.Duplex === undefined){
+									rowObject.Duplex = rowObject.Offset.charAt(0);
+									rowObject.Offset = Math.abs(rowObject.Offset);
+								}
+
+								if(rowObject.Tone !== undefined && rowObject.Tone !== "" && rowObject.rToneFreq === undefined){
+									rowObject.rToneFreq = rowObject.Tone;
+									rowObject.Tone = "Tone";
+								}
 							});
 
 							return rowObject;
 						});
 
 						return table;
+					},
+					tablesToObject: function(tables){
+						let tablesObject = {}
+
+						let tableNames = ["vhf", "uhf", "aprs", "farovi", "echoLink"];
+
+						tables.forEach(function(table, key){
+							tablesObject[tableNames[key]] = table;
+						});
+
+						return tablesObject;
 					}
 				}
 
